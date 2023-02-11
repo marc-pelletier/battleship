@@ -65,6 +65,11 @@ function initBoardEvents(board) {
     board.addEventListener("click", boardClicked);
 }
 
+function killBoardEvents(board) {
+    board.removeEventListener("mouseover", renderHover);
+    board.removeEventListener("click", boardClicked);
+}
+
 /*----- functions -----*/
 
 function initialize() {
@@ -88,7 +93,7 @@ function initialize() {
     selectedPlayer = "1";
     selectedCell = null;
     currentPlayer = "1";
-    currentBoard = "1";
+    currentBoard = "red";
     compTarget = null;
     compDirection = null;
     shipIndex = 0;
@@ -97,6 +102,7 @@ function initialize() {
 
 function play() {
     //render
+    renderCells(red.board, "red");
 
     //kill events
     
@@ -114,6 +120,9 @@ function play() {
             initBoardEvents(redBoardEl);
             //boardClicked will continue human players turn
             shipIndex++;
+            if (shipIndex == 5) {
+                red.placingShips = false;
+            }
         }
     }
 }
@@ -124,16 +133,18 @@ function boardClicked(e) {
     }
     else {
         let str = e.target.id;
-        str = str.substring(str.length-3,str.length);
+        str = str.substring(0,3);
         selectedCell = str.split("-");
         console.log(selectedCell);
         let computedCoords = computeCoords(selectedTool, selectedCell);
         if (isValid(computedCoords)) {
-            alert("Valid move - well done");
-            //pasteToBoard
+            computedCoords.forEach(function(coord) {
+                red.board[coord[0]][coord[1]].hasShip = true;
+            })
+            killBoardEvents(currentBoard == 'red' ? redBoardEl:blueBoardEl);
+            play();
         }
         else {
-            alert("Invalid move - please try again");
         }
     }
 }
@@ -167,17 +178,27 @@ function renderHover(e) {
     blueCellEls.forEach(function(cell) {
         cell.style.backgroundColor = 'white'
     });
-    let coords = e.target.id.substring(e.target.id.length-3, e.target.id.length).split('-');
+    let coords = e.target.id.substring(0, 3).split('-');
     let computedCoords = computeCoords(selectedTool, coords);
     if (isValid(computedCoords)) {
         for (i=0;i<computedCoords.length;i++) {
-            document.getElementById(`red ${computedCoords[i][0]}-${computedCoords[i][1]}`).style.backgroundColor = 'lightgreen'
+            document.getElementById(`${computedCoords[i][0]}-${computedCoords[i][1]} ${currentBoard}`).style.backgroundColor = 'lightgreen'
         }
     }
     else{
         for (i=0;i<computedCoords.length;i++) {
-            if (document.getElementById(`red ${computedCoords[i][0]}-${computedCoords[i][1]}`)) {
-                document.getElementById(`red ${computedCoords[i][0]}-${computedCoords[i][1]}`).style.backgroundColor = 'lightcoral'
+            if (document.getElementById(`${computedCoords[i][0]}-${computedCoords[i][1]} ${currentBoard}`)) {
+                document.getElementById(`${computedCoords[i][0]}-${computedCoords[i][1]} ${currentBoard}`).style.backgroundColor = 'lightcoral'
+            }
+        }
+    }
+}
+
+function renderCells(board, playerName, hiddenEls) {
+    for (let y=0; y<10; y++) {
+        for (let x=0; x<10; x++) {
+            if (board[x][y].hasShip) {
+                document.getElementById(`${x}-${y} ${playerName}`).style.backgroundColor = 'grey';
             }
         }
     }
