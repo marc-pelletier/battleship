@@ -50,6 +50,8 @@ let currentBoard;
 let compTarget;
 let compDirection;
 let shipIndex;
+let shipRotation;
+let hoveredCellCoords;
 
 /*----- cached element references -----*/
 const blueBoardEl = document.querySelector("#blue-player .board");
@@ -61,12 +63,13 @@ const redCellEls = document.querySelectorAll('#red-player .cell');
 
 /*----- event listeners -----*/
 function initBoardEvents(board) {
-    board.addEventListener("mouseover", renderHover);
+    board.addEventListener("mousemove", cellHovered);
     board.addEventListener("click", boardClicked);
+    document.addEventListener("keypress", rotateItem)
 }
 
 function killBoardEvents(board) {
-    board.removeEventListener("mouseover", renderHover);
+    board.removeEventListener("mousemove", cellHovered);
     board.removeEventListener("click", boardClicked);
 }
 
@@ -97,6 +100,8 @@ function initialize() {
     compTarget = null;
     compDirection = null;
     shipIndex = 0;
+    shipRotation = 0;
+    hoveredCellCoords = [null, null]
     play()
 }
 
@@ -115,12 +120,11 @@ function play() {
     else if (currentPlayer == "1") {
         //Check for placing ships
         if (red.placingShips) {
-            selectedTool = ships[Object.keys(ships)[shipIndex]][0];
+            selectedTool = ships[Object.keys(ships)[shipIndex]][shipRotation];
             console.log(selectedTool)
             initBoardEvents(redBoardEl);
             //boardClicked will continue human players turn
-            shipIndex++;
-            if (shipIndex == 5) {
+            if (shipIndex == 4) {
                 red.placingShips = false;
             }
         }
@@ -142,11 +146,18 @@ function boardClicked(e) {
                 red.board[coord[0]][coord[1]].hasShip = true;
             })
             killBoardEvents(currentBoard == 'red' ? redBoardEl:blueBoardEl);
+            shipIndex++;
+            shipRotation=0;
             play();
         }
         else {
         }
     }
+}
+
+function cellHovered(e) {
+    hoveredCellCoords = e.target.id.substring(0, 3).split('-');
+    renderHover(hoveredCellCoords);
 }
 
 function isValid(coords, board) {
@@ -171,14 +182,22 @@ function computeCoords(item, coords) {
     return newCoords;
 }
 
-function renderHover(e) {
+function rotateItem(e) {
+    if (e.key == 'r') {
+        shipRotation++;
+        if (shipRotation == ships[Object.keys(ships)[shipIndex]].length) shipRotation=0;
+        selectedTool = ships[Object.keys(ships)[shipIndex]][shipRotation];
+        renderHover(hoveredCellCoords);
+    }
+}
+
+function renderHover(coords) {
     redCellEls.forEach(function(cell) {
         cell.style.backgroundColor = 'white'
     });
     blueCellEls.forEach(function(cell) {
         cell.style.backgroundColor = 'white'
     });
-    let coords = e.target.id.substring(0, 3).split('-');
     let computedCoords = computeCoords(selectedTool, coords);
     if (isValid(computedCoords)) {
         for (i=0;i<computedCoords.length;i++) {
