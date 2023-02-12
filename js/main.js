@@ -42,7 +42,13 @@ const selectedTool = {
     coords: null
 }
 
+//Stores AI functions and states
 const AI = {
+    //States
+    target: null,
+    direction: null,
+
+    //Places ship in cell object
     placeShip: function() {
         if (shipIndex == 5) {
             blue.placingShips = false;
@@ -62,8 +68,9 @@ const AI = {
             }
         }
     },
-    randomMissile: function() {
-        let computedCoords = computeCoords(selectedTool.coords, [getRandomNumber(0,9),getRandomNumber(0,9)]);
+    //Pick random spot on board and fire missile
+    randomMissile: function(min, max) {
+        let computedCoords = computeCoords(selectedTool.coords, [getRandomNumber(min,max),getRandomNumber(min,max)]);
         if (isValid(computedCoords, blue)) {
             computedCoords.forEach(function(coord) {
                 red.board[coord[0]][coord[1]].isHit = true;
@@ -82,8 +89,6 @@ let selectedPlayer = "1";
 let selectedCell = null;
 let currentPlayer;
 let currentBoard;
-let compTarget;
-let compDirection;
 let shipIndex;
 let shipRotation;
 let hoveredCellCoords;
@@ -111,6 +116,7 @@ function killBoardEvents(boardEl) {
 
 /*----- functions -----*/
 
+//Playing the game
 function initialize() {
     redBoard = [];
     for (let x=0;x<10;x++) {
@@ -141,11 +147,11 @@ function initialize() {
 }
 
 function play() {
-    //render
+    //Render
     renderCells(red.board, "red", false);
     renderCells(blue.board, "blue", true);
     
-    //win check
+    //Win check
     if (!red.shipHealth.reduce((acc,s) => acc + s, 0)) {
         alert("Blue wins");
     }
@@ -153,63 +159,53 @@ function play() {
         alert("Red wins");
     }
 
+    //AI plays
     else if (currentPlayer == "-1") {
         if (blue.placingShips) {
             AI.placeShip();
             play();
         }
         else{
-            AI.randomMissile();
+            AI.randomMissile(0,9);
             swapPlayers();
             play();
         }
     }
 
+    //Player plays
     else if (currentPlayer == "1") {
+        //Check if placing ships
         if (red.placingShips) {
+            //Check if all ships are placed and turn off placing ships
             if (shipIndex == 5) {
                 killBoardEvents(redBoardEl)
                 red.placingShips = false;
                 swapPlayers();
                 play();
             }
+            //set selectedTool, initialize board events and end function. 
+            //Player turn continues in boardClicked()
             else{
                 selectedTool.coords = ships[Object.keys(ships)[shipIndex]][shipRotation];
                 selectedTool.name = "ship";
                 initBoardEvents(redBoardEl);
             }
         }
+        //initialize blue board events. 
+        //Player turn continues in boardClicked()
         else {
             initBoardEvents(blueBoardEl);
         }
     }
 }
 
-function getRandomNumber(min, max) {
-    return Math.floor(Math.random() * (max - min +1)) + min;
-}
-
-function swapPlayers() {
-    selectedTool.coords = tools.missile;
-    selectedTool.name = "missile";
-    selectedCell = null;
-    currentPlayer = currentPlayer*-1;
-    currentBoard = currentPlayer == 1 ? "blue":"red";
-    compTarget = null;
-    compDirection = null;
-    shipIndex = 0;
-    shipRotation = 0;
-    hoveredCellCoords = [null, null];
-}
-
 function boardClicked(e) {
+    //Return if anything but cell clicked
     if (e.target.className != 'cell') {
         return;
     }
     else {
-        let str = e.target.id;
-        str = str.substring(0,3);
-        selectedCell = str.split("-");
+        selectedCell = idToArray(e.target.id);
         let computedCoords = computeCoords(selectedTool.coords, selectedCell);
         if (isValid(computedCoords, currentBoard == 'red' ? red:blue)) {
             computedCoords.forEach(function(coord) {
@@ -239,9 +235,16 @@ function boardClicked(e) {
     }
 }
 
-function cellHovered(e) {
-    hoveredCellCoords = e.target.id.substring(0, 3).split('-');
-    renderHover(hoveredCellCoords);
+
+
+//Getters
+
+function idToArray(str) {
+    return str.substring(0,3).split("-").map(v => parseInt(v));
+}
+
+function getRandomNumber(min, max) {
+    return Math.floor(Math.random() * (max - min +1)) + min;
 }
 
 function isValid(coords, player) {
@@ -249,7 +252,7 @@ function isValid(coords, player) {
         if (coords[i].some(coord => coord > 9) 
         || player.placingShips 
         && player.board[coords[i][0]][coords[i][1]].hasShip
-        || player.board[coords[i][0]][coords[i][1]].isHit) {
+        /*|| player.board[coords[i][0]][coords[i][1]].isHit*/) {
             return false;
         }
     }
@@ -260,11 +263,33 @@ function computeCoords(item, coords) {
     let newCoords = [];
     newCoords = item.map(
         function(section) {
-            return [section[0] + parseInt(coords[0]),
-            section[1] + parseInt(coords[1])];
+            return [section[0] + coords[0],
+            section[1] + coords[1]];
         }
     )
     return newCoords;
+}
+
+
+
+//Setters
+
+function swapPlayers() {
+    selectedTool.coords = tools.missile;
+    selectedTool.name = "missile";
+    selectedCell = null;
+    currentPlayer = currentPlayer*-1;
+    currentBoard = currentPlayer == 1 ? "blue":"red";
+    compTarget = null;
+    compDirection = null;
+    shipIndex = 0;
+    shipRotation = 0;
+    hoveredCellCoords = [null, null];
+}
+
+function cellHovered(e) {
+    hoveredCellCoords = idToArray(e.target.id);
+    renderHover(hoveredCellCoords);
 }
 
 function rotateItem(e) {
@@ -277,6 +302,10 @@ function rotateItem(e) {
         }
     }
 }
+
+
+
+//Render
 
 function renderHover(coords) {
     redCellEls.forEach(function(cell) {
