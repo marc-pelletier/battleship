@@ -3,6 +3,7 @@ class Cell {
     constructor() {
         this.isHit = false;
         this.hasShip = false;
+        this.shipIndex = null;
     }
 }
 
@@ -12,7 +13,6 @@ class Player {
         this.placingShips = true;
         this.shipHealth = [4,4,6,4,2];
         this.prevPlays = [];
-        this.shipCoords = {};
         this.board = board;
     }
 }
@@ -56,6 +56,7 @@ const AI = {
             if (isValid(computedCoords, blue)) {
                 computedCoords.forEach(function(coord) {
                     blue.board[coord[0]][coord[1]].hasShip = true;
+                    blue.board[coord[0]][coord[1]].shipIndex = shipIndex;
                 })
                 shipIndex++;
             }
@@ -143,12 +144,16 @@ function play() {
     //render
     renderCells(red.board, "red", false);
     renderCells(blue.board, "blue", true);
-
-    //kill events
     
     //win check
+    if (!red.shipHealth.reduce((acc,s) => acc + s, 0)) {
+        alert("Blue wins");
+    }
+    else if (!blue.shipHealth.reduce((acc,s) => acc + s, 0)) {
+        alert("Red wins");
+    }
 
-    if (currentPlayer == "-1") {
+    else if (currentPlayer == "-1") {
         if (blue.placingShips) {
             AI.placeShip();
             play();
@@ -208,8 +213,16 @@ function boardClicked(e) {
         let computedCoords = computeCoords(selectedTool.coords, selectedCell);
         if (isValid(computedCoords, currentBoard == 'red' ? red:blue)) {
             computedCoords.forEach(function(coord) {
-                if (selectedTool.name == "ship") red.board[coord[0]][coord[1]].hasShip = true;
-                if (selectedTool.name == "missile") blue.board[coord[0]][coord[1]].isHit = true;
+                if (selectedTool.name == "ship") {
+                    red.board[coord[0]][coord[1]].hasShip = true;
+                    red.board[coord[0]][coord[1]].shipIndex = shipIndex;
+                }
+                if (selectedTool.name == "missile") {
+                    blue.board[coord[0]][coord[1]].isHit = true;
+                    if (blue.board[coord[0]][coord[1]].hasShip == true) {
+                        blue.shipHealth[shipIndex]--;
+                    }
+                }
             })
             killBoardEvents(currentBoard == 'red' ? redBoardEl:blueBoardEl);
             if (red.placingShips) {
