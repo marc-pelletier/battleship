@@ -37,12 +37,46 @@ const tools = {
     missile: [[0,0]]
 }
 
+const selectedTool = {
+    name: null,
+    coords: null
+}
+
+const AI = {
+    placeShip: function() {
+        if (shipIndex == 5) {
+            blue.placingShips = false;
+            swapPlayers();
+        }
+        else {
+            shipRotation=getRandomNumber(0, (ships[Object.keys(ships)[shipIndex]].length-1));
+            selectedTool.coords = ships[Object.keys(ships)[shipIndex]][shipRotation];
+            selectedTool.name = "ship";
+            let computedCoords = computeCoords(selectedTool.coords, [getRandomNumber(0,9),getRandomNumber(0,9)]);
+            if (isValid(computedCoords, blue)) {
+                computedCoords.forEach(function(coord) {
+                    blue.board[coord[0]][coord[1]].hasShip = true;
+                })
+                shipIndex++;
+            }
+        }
+    },
+    randomMissile: function() {
+        let computedCoords = computeCoords(selectedTool.coords, [getRandomNumber(0,9),getRandomNumber(0,9)]);
+        if (isValid(computedCoords, blue)) {
+            computedCoords.forEach(function(coord) {
+                red.board[coord[0]][coord[1]].isHit = true;
+                console.log(red.board[coord[0]][coord[1]])
+            })
+        }
+    }
+}
+
 /*----- app's state (variables) -----*/
 let redBoard;
 let red;
 let blueBoard;
 let blue;
-let selected;
 let selectedPlayer = "1";
 let selectedCell = null;
 let currentPlayer;
@@ -62,15 +96,16 @@ const blueCellEls = document.querySelectorAll('#blue-player .cell');
 const redCellEls = document.querySelectorAll('#red-player .cell');
 
 /*----- event listeners -----*/
-function initBoardEvents(board) {
-    board.addEventListener("mousemove", cellHovered);
-    board.addEventListener("click", boardClicked);
+function initBoardEvents(boardEl) {
+    boardEl.addEventListener("mousemove", cellHovered);
+    boardEl.addEventListener("click", boardClicked);
     document.addEventListener("keypress", rotateItem)
 }
 
-function killBoardEvents(board) {
-    board.removeEventListener("mousemove", cellHovered);
-    board.removeEventListener("click", boardClicked);
+function killBoardEvents(boardEl) {
+    boardEl.removeEventListener("mousemove", cellHovered);
+    boardEl.removeEventListener("click", boardClicked);
+    document.removeEventListener("keypress", rotateItem)
 }
 
 /*----- functions -----*/
@@ -92,7 +127,6 @@ function initialize() {
     }
     red = new Player("1", redBoard);
     blue = new Player("-1", blueBoard);
-    selectedTool = null;
     selectedPlayer = "1";
     selectedCell = null;
     currentPlayer = "1";
@@ -107,28 +141,60 @@ function initialize() {
 
 function play() {
     //render
-    renderCells(red.board, "red");
+    renderCells(red.board, "red", false);
+    renderCells(blue.board, "blue", true);
 
     //kill events
     
     //win check
 
     if (currentPlayer == "-1") {
-        // Comp turn
+        if (blue.placingShips) {
+            AI.placeShip();
+            play();
+        }
+        else{
+            AI.randomMissile();
+            swapPlayers();
+            play();
+        }
     }
 
     else if (currentPlayer == "1") {
-        //Check for placing ships
         if (red.placingShips) {
-            selectedTool = ships[Object.keys(ships)[shipIndex]][shipRotation];
-            console.log(selectedTool)
-            initBoardEvents(redBoardEl);
-            //boardClicked will continue human players turn
-            if (shipIndex == 4) {
+            if (shipIndex == 5) {
+                killBoardEvents(redBoardEl)
                 red.placingShips = false;
+                swapPlayers();
+                play();
+            }
+            else{
+                selectedTool.coords = ships[Object.keys(ships)[shipIndex]][shipRotation];
+                selectedTool.name = "ship";
+                initBoardEvents(redBoardEl);
             }
         }
+        else {
+            initBoardEvents(blueBoardEl);
+        }
     }
+}
+
+function getRandomNumber(min, max) {
+    return Math.floor(Math.random() * (max - min +1)) + min;
+}
+
+function swapPlayers() {
+    selectedTool.coords = tools.missile;
+    selectedTool.name = "missile";
+    selectedCell = null;
+    currentPlayer = currentPlayer*-1;
+    currentBoard = currentPlayer == 1 ? "blue":"red";
+    compTarget = null;
+    compDirection = null;
+    shipIndex = 0;
+    shipRotation = 0;
+    hoveredCellCoords = [null, null];
 }
 
 function boardClicked(e) {
@@ -139,15 +205,20 @@ function boardClicked(e) {
         let str = e.target.id;
         str = str.substring(0,3);
         selectedCell = str.split("-");
-        console.log(selectedCell);
-        let computedCoords = computeCoords(selectedTool, selectedCell);
-        if (isValid(computedCoords)) {
+        let computedCoords = computeCoords(selectedTool.coords, selectedCell);
+        if (isValid(computedCoords, currentBoard == 'red' ? red:blue)) {
             computedCoords.forEach(function(coord) {
-                red.board[coord[0]][coord[1]].hasShip = true;
+                if (selectedTool.name == "ship") red.board[coord[0]][coord[1]].hasShip = true;
+                if (selectedTool.name == "missile") blue.board[coord[0]][coord[1]].isHit = true;
             })
             killBoardEvents(currentBoard == 'red' ? redBoardEl:blueBoardEl);
-            shipIndex++;
-            shipRotation=0;
+            if (red.placingShips) {
+                shipIndex++;
+                shipRotation=0;
+            }
+            else {
+                swapPlayers();
+            }
             play();
         }
         else {
@@ -160,18 +231,19 @@ function cellHovered(e) {
     renderHover(hoveredCellCoords);
 }
 
-function isValid(coords, board) {
-    let valid = false;
-
+function isValid(coords, player) {
     for (let i=0;i<coords.length;i++) {
-        valid = !coords[i].some(coord => coord > 9);
+        if (coords[i].some(coord => coord > 9) 
+        || player.placingShips 
+        && player.board[coords[i][0]][coords[i][1]].hasShip
+        || player.board[coords[i][0]][coords[i][1]].isHit) {
+            return false;
+        }
     }
-    return valid;
+    return true;
 }
 
 function computeCoords(item, coords) {
-    //console.log("coords are " + coords);
-    //console.log(item)
     let newCoords = [];
     newCoords = item.map(
         function(section) {
@@ -184,10 +256,12 @@ function computeCoords(item, coords) {
 
 function rotateItem(e) {
     if (e.key == 'r') {
-        shipRotation++;
-        if (shipRotation == ships[Object.keys(ships)[shipIndex]].length) shipRotation=0;
-        selectedTool = ships[Object.keys(ships)[shipIndex]][shipRotation];
-        renderHover(hoveredCellCoords);
+        if (red.placingShips) {
+            shipRotation++;
+            if (shipRotation == ships[Object.keys(ships)[shipIndex]].length) shipRotation=0;
+            selectedTool.coords = ships[Object.keys(ships)[shipIndex]][shipRotation];
+            renderHover(hoveredCellCoords);
+        }
     }
 }
 
@@ -198,8 +272,8 @@ function renderHover(coords) {
     blueCellEls.forEach(function(cell) {
         cell.style.backgroundColor = 'white'
     });
-    let computedCoords = computeCoords(selectedTool, coords);
-    if (isValid(computedCoords)) {
+    let computedCoords = computeCoords(selectedTool.coords, coords);
+    if (isValid(computedCoords, currentBoard == 'red' ? red:blue)) {
         for (i=0;i<computedCoords.length;i++) {
             document.getElementById(`${computedCoords[i][0]}-${computedCoords[i][1]} ${currentBoard}`).style.backgroundColor = 'lightgreen'
         }
@@ -207,7 +281,7 @@ function renderHover(coords) {
     else{
         for (i=0;i<computedCoords.length;i++) {
             if (document.getElementById(`${computedCoords[i][0]}-${computedCoords[i][1]} ${currentBoard}`)) {
-                document.getElementById(`${computedCoords[i][0]}-${computedCoords[i][1]} ${currentBoard}`).style.backgroundColor = 'lightcoral'
+                document.getElementById(`${computedCoords[i][0]}-${computedCoords[i][1]} ${currentBoard}`).style.backgroundColor = 'salmon'
             }
         }
     }
@@ -216,8 +290,14 @@ function renderHover(coords) {
 function renderCells(board, playerName, hiddenEls) {
     for (let y=0; y<10; y++) {
         for (let x=0; x<10; x++) {
-            if (board[x][y].hasShip) {
-                document.getElementById(`${x}-${y} ${playerName}`).style.backgroundColor = 'grey';
+            if (board[x][y].hasShip && board[x][y].isHit) {
+                document.getElementById(`${x}-${y} ${playerName}`).textContent = 'H';
+            }
+            else if (board[x][y].hasShip && !hiddenEls) {
+                document.getElementById(`${x}-${y} ${playerName}`).textContent = 'S';
+            }
+            else if (board[x][y].isHit) {
+                document.getElementById(`${x}-${y} ${playerName}`).textContent = 'M';
             }
         }
     }
