@@ -77,10 +77,21 @@ const AI = {
                 cell.isHit = true;
                 if (cell.hasShip) {
                     red.shipHealth[cell.shipIndex]--;
-                    if (red.shipHealth[cell.shipIndex]===0){
+                    if (red.shipHealth[cell.shipIndex]<=0){
                         AI.targetCell = null;
                         AI.currentDirection = null;
                         AI.directionsTried = [];
+                        console.log(blue.prevPlays)
+                        for (let i = blue.prevPlays.length-1; i >= 0; i--) {
+                            let y = blue.prevPlays[i][0][0];
+                            let x = blue.prevPlays[i][0][1];
+                            console.log(blue.prevPlays[i]);
+                            if (red.board[y][x].hasShip 
+                                && red.board[y][x].isHit 
+                                && red.shipHealth[red.board[y][x].shipIndex] > 0) {
+                                    AI.targetCell = [[y,x]]
+                                }
+                        }
                     }
                     else {
                         AI.targetCell = coords;
@@ -120,6 +131,19 @@ const AI = {
             AI.targetCell = null;
             AI.currentDirection = null;
             AI.directionsTried = [];
+            console.log(blue.prevPlays);
+            for (let i = blue.prevPlays.length-1; i >= 0; i--) {
+                let y = blue.prevPlays[i][0][0];
+                let x = blue.prevPlays[i][0][1];
+                console.log(x)
+                console.log(y)
+                console.log(blue.prevPlays[i]);
+                if (red.board[y][x].hasShip 
+                    && red.board[y][x].isHit 
+                    && red.shipHealth[red.board[y][x].shipIndex] > 0) {
+                        AI.targetCell = [[y,x]]
+                    }
+            }
         }
         AI.placeToBoard(computedCoords);
     }
@@ -208,17 +232,15 @@ function play() {
     else if (currentPlayer == "-1") {
         if (blue.placingShips) {
             AI.placeShip();
-            play();
         }
         else if (AI.targetCell) {
             if (AI.currentDirection) AI.walk(AI.currentDirection);
             else AI.walk(getRandomNumber(0,3));
-            play();
         }
         else {
             AI.randomMissile(0,9);
-            play();
         }
+        play()
     }
 
     //Player plays
