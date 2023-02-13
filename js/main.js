@@ -45,8 +45,9 @@ const selectedTool = {
 //Stores AI functions and states
 const AI = {
     //States
-    target: null,
-    direction: null,
+    targetCell: null,
+    directionsTried: [],
+    currentDirection: null,
 
     //Places ship in cell object
     placeShip: function() {
@@ -68,15 +69,59 @@ const AI = {
             }
         }
     },
+    //Place missiles on board
+    placeToBoard: function(coords) {
+        if (isValid(coords, red)) {
+            coords.forEach(function(coord) {
+                let cell = red.board[coord[0]][coord[1]];
+                cell.isHit = true;
+                if (cell.hasShip) {
+                    red.shipHealth[cell.shipIndex]--;
+                    if (red.shipHealth[cell.shipIndex]===0){
+                        AI.targetCell = null;
+                        AI.currentDirection = null;
+                        AI.directionsTried = [];
+                    }
+                    else {
+                        AI.targetCell = coords;
+                        AI.directionsTried = [];
+                    }
+                }
+                else {
+                    AI.currentDirection = null;
+                }
+                blue.prevPlays.push(coords);
+            })
+            swapPlayers();
+        }
+        else {
+        }
+    },
     //Pick random spot on board and fire missile
     randomMissile: function(min, max) {
         let computedCoords = computeCoords(selectedTool.coords, [getRandomNumber(min,max),getRandomNumber(min,max)]);
-        if (isValid(computedCoords, blue)) {
-            computedCoords.forEach(function(coord) {
-                red.board[coord[0]][coord[1]].isHit = true;
-                console.log(red.board[coord[0]][coord[1]])
-            })
+        AI.placeToBoard(computedCoords);
+    },
+    //Walk across board
+    walk: function(dir) {
+        let directions = [["-1", 0],[0, 1],[1, 0],[0, "-1"]];
+        let direction = [directions[dir][0],directions[dir][1]];
+        let hasTried = false;
+        for (let triedDir of AI.directionsTried) {
+            if (triedDir.join() == direction.join()) {
+                hasTried = true;
+            }
         }
+        AI.currentDirection = dir;
+        if (hasTried) AI.currentDirection = null;
+        else AI.directionsTried.push(direction);
+        let computedCoords = computeCoords(AI.targetCell, direction);
+        if (AI.directionsTried.length >= 4) {
+            AI.targetCell = null;
+            AI.currentDirection = null;
+            AI.directionsTried = [];
+        }
+        AI.placeToBoard(computedCoords);
     }
 }
 
@@ -165,9 +210,13 @@ function play() {
             AI.placeShip();
             play();
         }
-        else{
+        else if (AI.targetCell) {
+            if (AI.currentDirection) AI.walk(AI.currentDirection);
+            else AI.walk(getRandomNumber(0,3));
+            play();
+        }
+        else {
             AI.randomMissile(0,9);
-            swapPlayers();
             play();
         }
     }
@@ -186,8 +235,9 @@ function play() {
             //set selectedTool, initialize board events and end function. 
             //Player turn continues in boardClicked()
             else{
-                selectedTool.coords = ships[Object.keys(ships)[shipIndex]][shipRotation];
-                selectedTool.name = "ship";
+                let shipName = Object.keys(ships)[shipIndex];
+                selectedTool.coords = ships[shipName][shipRotation];
+                selectedTool.name = shipName;
                 initBoardEvents(redBoardEl);
             }
         }
@@ -208,16 +258,21 @@ function boardClicked(e) {
         selectedCell = idToArray(e.target.id);
         let computedCoords = computeCoords(selectedTool.coords, selectedCell);
         if (isValid(computedCoords, currentBoard == 'red' ? red:blue)) {
-            computedCoords.forEach(function(coord) {
-                if (selectedTool.name == "ship") {
-                    red.board[coord[0]][coord[1]].hasShip = true;
-                    red.board[coord[0]][coord[1]].shipIndex = shipIndex;
-                }
+            computedCoords.forEach(function(coord, section) {
+                let cell = red.board[coord[0]][coord[1]];
                 if (selectedTool.name == "missile") {
                     blue.board[coord[0]][coord[1]].isHit = true;
                     if (blue.board[coord[0]][coord[1]].hasShip == true) {
                         blue.shipHealth[shipIndex]--;
                     }
+                    red.prevPlays.push(computedCoords);
+                }
+                else {
+                    cell.hasShip = true;
+                    cell.shipName = selectedTool.name;
+                    cell.shipSection = section;
+                    cell.shipRotation = shipRotation;
+                    cell.shipIndex = shipIndex;
                 }
             })
             killBoardEvents(currentBoard == 'red' ? redBoardEl:blueBoardEl);
@@ -231,6 +286,7 @@ function boardClicked(e) {
             play();
         }
         else {
+            return;
         }
     }
 }
@@ -250,9 +306,9 @@ function getRandomNumber(min, max) {
 function isValid(coords, player) {
     for (let i=0;i<coords.length;i++) {
         if (coords[i].some(coord => coord > 9) 
-        || player.placingShips 
-        && player.board[coords[i][0]][coords[i][1]].hasShip
-        /*|| player.board[coords[i][0]][coords[i][1]].isHit*/) {
+        || coords[i].some(coord => coord < 0)
+        || player.placingShips && player.board[coords[i][0]][coords[i][1]].hasShip
+        || player.board[coords[i][0]][coords[i][1]].isHit) {
             return false;
         }
     }
@@ -263,8 +319,8 @@ function computeCoords(item, coords) {
     let newCoords = [];
     newCoords = item.map(
         function(section) {
-            return [section[0] + coords[0],
-            section[1] + coords[1]];
+            return [parseInt(section[0]) + parseInt(coords[0]),
+            parseInt(section[1]) + parseInt(coords[1])];
         }
     )
     return newCoords;
