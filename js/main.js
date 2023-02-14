@@ -22,7 +22,7 @@ const ships = {
     lShip: [[[0,0],[0,1],[0,2],[1,2]],
             [[0,1],[1,1],[2,0],[2,1]],
             [[0,0],[1,0],[1,1],[1,2]],
-            [[0,0],[0,1],[1,1],[2,1]]],
+            [[0,0],[0,1],[1,0],[2,0]]],
     zShip: [[[0,0],[0,1],[1,1],[1,2]],
             [[0,1],[1,0],[1,1],[2,0]]],
     sixShip: [[[0,0],[0,1],[0,2],[0,3],[0,4],[0,5]],
@@ -80,22 +80,24 @@ const AI = {
                     if (red.shipHealth[cell.shipIndex]<=0){
                         AI.targetCell = null;
                         AI.targetPrevHits();
+                        console.log("has ship target cell prev hit")
+                        console.log(AI.targetCell)
                         AI.currentDirection = null;
-                        AI.directionsTried = [];
                     }
                     else {
                         if (getRandomNumber(0,99) < 30) {
                             AI.currentDirection = null;
                         }
                         AI.targetCell = coords;
-                        AI.directionsTried = [];
                     }
+                    AI.directionsTried = [];
                     blue.prevPlays.push(coords);
                 }
                 else {
                     blue.prevPlays.push(coords);
-                    swapPlayers();
                     AI.currentDirection = null;
+                    AI.directionsTried = [];
+                    swapPlayers();
                 }
             })
         }
@@ -120,7 +122,9 @@ const AI = {
         else AI.directionsTried.push(direction);
         let computedCoords = computeCoords(AI.targetCell, direction);
         if (AI.directionsTried.length >= 4) {
-            AI.targetCell = null;
+            AI.targetPrevHits();
+            console.log("target cell prev hit")
+            console.log(AI.targetCell)
             AI.currentDirection = null;
             AI.directionsTried = [];
         }
@@ -130,13 +134,14 @@ const AI = {
         for (let i = blue.prevPlays.length-1; i >= 0; i--) {
             let y = blue.prevPlays[i][0][0];
             let x = blue.prevPlays[i][0][1];
+            console.log(red.shipHealth[red.board[y][x].shipIndex]);
             if (red.board[y][x].hasShip 
                 && red.board[y][x].isHit 
                 && red.shipHealth[red.board[y][x].shipIndex] > 0) {
-                    AI.targetCell = [[y,x]]
+                    AI.targetCell = [[y,x]];
                 }
         }
-    }
+    },
 }
 
 /*----- app's state (variables) -----*/
