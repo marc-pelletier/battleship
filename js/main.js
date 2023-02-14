@@ -48,7 +48,7 @@ const AI = {
     targetCell: null,
     directionsTried: [],
     currentDirection: null,
-
+    
     //Places ship in cell object
     placeShip: function() {
         if (shipIndex == 5) {
@@ -85,7 +85,6 @@ const AI = {
                     }
                     else {
                         if (getRandomNumber(0,99) < 30) {
-                            console.log("direction reset - random")
                             AI.currentDirection = null;
                         }
                         AI.targetCell = coords;
@@ -122,10 +121,8 @@ const AI = {
         let computedCoords = computeCoords(AI.targetCell, direction);
         if (AI.directionsTried.length >= 4) {
             AI.targetCell = null;
-            AI.targetPrevHits();
             AI.currentDirection = null;
             AI.directionsTried = [];
-            console.log(blue.prevPlays);
         }
         AI.placeToBoard(computedCoords);
     },
@@ -133,9 +130,6 @@ const AI = {
         for (let i = blue.prevPlays.length-1; i >= 0; i--) {
             let y = blue.prevPlays[i][0][0];
             let x = blue.prevPlays[i][0][1];
-            console.log(x)
-            console.log(y)
-            console.log(blue.prevPlays[i]);
             if (red.board[y][x].hasShip 
                 && red.board[y][x].isHit 
                 && red.shipHealth[red.board[y][x].shipIndex] > 0) {
