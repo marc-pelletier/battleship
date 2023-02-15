@@ -59,8 +59,8 @@ const gFX = {
     hit: 0,
     miss: 0,
     ships:[
-        ["images/ship-front.png","images/ship-middle.png","images/ship-end.png","images/ship-front.png"], //lShip
-        ["images/ship-front.png","images/ship-end.png","images/ship-front.png","images/ship-end.png"], //zShip
+        ["images/ship-front.png","images/ship-middle.png","images/ship-end.png","images/lship-tagalongs.png"], //lShip
+        ["images/ship-front.png","images/zship-middle-upper.png","images/zship-middle-lower.png","images/ship-end.png"], //zShip
         ["images/ship-front.png","images/ship-middle.png","images/ship-middle.png","images/ship-middle.png","images/ship-middle.png","images/ship-end.png"], //sixShip
         ["images/ship-front.png","images/ship-middle.png","images/ship-middle.png","images/ship-end.png"], //fourShip
         ["images/2ship-front.png","images/2ship-end.png"]
@@ -107,7 +107,9 @@ const AI = {
                 let cell = red.board[coord[0]][coord[1]];
                 cell.isHit = true;
                 if (cell.hasShip) {
-                    sFX.hit.cloneNode().play();
+                    let hitSound = sFX.hit.cloneNode();
+                    hitSound.volume = volumeSlider.value;
+                    hitSound.play();
                     red.shipHealth[cell.shipIndex]--;
                     if (red.shipHealth[cell.shipIndex]<=0){
                         AI.targetCell = null;
@@ -124,7 +126,9 @@ const AI = {
                     blue.prevPlays.push(coords);
                 }
                 else {
-                    sFX.miss.cloneNode().play();
+                    let missSound = sFX.miss.cloneNode();
+                    missSound.volume = volumeSlider.value;
+                    missSound.play();
                     blue.prevPlays.push(coords);
                     AI.currentDirection = null;
                     AI.directionsTried = [];
@@ -199,16 +203,26 @@ const blueRowEls = document.querySelectorAll("#blue-player .row");
 const redRowEls = document.querySelectorAll("#red-player .row");
 const blueCellEls = document.querySelectorAll('#blue-player .cell');
 const redCellEls = document.querySelectorAll('#red-player .cell');
+const volumeSlider = document.getElementById("sound-slider");
+const restartBtn = document.querySelectorAll(".restart");
+const resumeBtn = document.querySelectorAll(".resume");
+const overlayEl = document.getElementById("overlay");
+const menuBtn = document.getElementById("menubtn");
+const menuEl = document.getElementById("menu");
+const winscreenEl = document.getElementById("win-screen");
+const winMessage = document.querySelector("#win-screen h3");
 
 /*----- event listeners -----*/
 function initBoardEvents(boardEl) {
     boardEl.addEventListener("click", boardClicked);
     document.addEventListener("keypress", rotateItem)
+    document.addEventListener("wheel", rotateItem)
 }
 
 function killBoardEvents(boardEl) {
     boardEl.removeEventListener("click", boardClicked);
     document.removeEventListener("keypress", rotateItem)
+    document.removeEventListener("wheel", rotateItem)
 }
 
 function initHoverEvents(boardEl) {
@@ -219,10 +233,49 @@ function killHoverEvents(boardEl) {
     boardEl.removeEventListener("mousemove", cellHovered);
 }
 
+restartBtn[0].addEventListener("click", () => {
+    initialize();
+    overlayEl.classList.add("hidden");
+    menuEl.classList.add("hidden");
+})
+
+resumeBtn[0].addEventListener("click", () => {
+    overlayEl.classList.add("hidden");
+    menuEl.classList.add("hidden");
+})
+
+restartBtn[1].addEventListener("click", () => {
+    initialize();
+    overlayEl.classList.add("hidden");
+    winscreenEl.classList.add("hidden");
+})
+
+resumeBtn[1].addEventListener("click", () => {
+    overlayEl.classList.add("hidden");
+    winscreenEl.classList.add("hidden");
+})
+
+menuBtn.addEventListener("click", () => {
+    overlayEl.classList.remove("hidden");
+    menuEl.classList.remove("hidden");
+})
+
 /*----- functions -----*/
 
 //Playing the game
 function initialize() {
+    killHoverEvents(redBoardEl);
+    killHoverEvents(blueBoardEl);
+    for (cell of blueCellEls) {
+        cell.classList.remove("rotate90")
+        cell.classList.remove("rotate180")
+        cell.classList.remove("rotate270")
+    }
+    for (cell of redCellEls) {
+        cell.classList.remove("rotate90")
+        cell.classList.remove("rotate180")
+        cell.classList.remove("rotate270")
+    }
     redBoard = [];
     for (let x=0;x<10;x++) {
         redBoard.push([]);
@@ -258,13 +311,17 @@ function play() {
     
     //Win check
     if (!red.shipHealth.reduce((acc,s) => acc + s, 0)) {
-        alert("Blue wins");
-        killBoardEvents(redBoardEl)
-        killBoardEvents(blueBoardEl)
+        winMessage.textContent = "Blue has won!"
+        overlayEl.classList.remove("hidden");
+        winscreenEl.classList.remove("hidden");
+        killBoardEvents(redBoardEl);
+        killBoardEvents(blueBoardEl);
         renderCells(blue.board, "blue", false);
     }
     else if (!blue.shipHealth.reduce((acc,s) => acc + s, 0)) {
-        alert("Red wins");
+        winMessage.textContent = "Red has won!"
+        overlayEl.classList.remove("hidden");
+        winscreenEl.classList.remove("hidden");
         killBoardEvents(redBoardEl)
         killBoardEvents(blueBoardEl)
         renderCells(blue.board, "blue", false);
@@ -330,11 +387,15 @@ function boardClicked(e) {
                 if (selectedTool.name == "missile") {
                     blue.board[coord[0]][coord[1]].isHit = true;
                     if (blue.board[coord[0]][coord[1]].hasShip == true) {
-                        sFX.hit.cloneNode().play();
+                        let hitSound = sFX.hit.cloneNode();
+                        hitSound.volume = volumeSlider.value;
+                        hitSound.play();
                         blue.shipHealth[blue.board[coord[0]][coord[1]].shipIndex]--;
                     }
                     else{
-                        sFX.miss.cloneNode().play();
+                        let missSound = sFX.miss.cloneNode();
+                        missSound.volume = volumeSlider.value;
+                        missSound.play();
                         swapPlayers();
                     }
                 }
@@ -428,6 +489,22 @@ function rotateItem(e) {
             renderHover(hoveredCellCoords);
         }
     }
+    else if (Math.sign(e.deltaY) == '1') {
+        if (red.placingShips) {
+            shipRotation++;
+            if (shipRotation == ships[Object.keys(ships)[shipIndex]].length) shipRotation = 0;
+            selectedTool.coords = ships[Object.keys(ships)[shipIndex]][shipRotation];
+            renderHover(hoveredCellCoords);
+        }
+    }
+    else if (Math.sign(e.deltaY) == '-1') {
+        if (red.placingShips) {
+            shipRotation--;
+            if (shipRotation < 0) shipRotation = ships[Object.keys(ships)[shipIndex]].length-1;
+            selectedTool.coords = ships[Object.keys(ships)[shipIndex]][shipRotation];
+            renderHover(hoveredCellCoords);
+        }
+    }
 }
 
 
@@ -436,10 +513,10 @@ function rotateItem(e) {
 
 function renderHover(coords) {
     redCellEls.forEach(function(cell) {
-        cell.style.backgroundColor = 'white'
+        cell.style.backgroundColor = 'transparent'
     });
     blueCellEls.forEach(function(cell) {
-        cell.style.backgroundColor = 'white'
+        cell.style.backgroundColor = 'transparent'
     });
     let computedCoords = computeCoords(selectedTool.coords, coords);
     if (isValid(computedCoords, currentBoard == 'red' ? red:blue)) {
