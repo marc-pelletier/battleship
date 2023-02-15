@@ -20,17 +20,25 @@ class Player {
 /*----- constants -----*/
 const ships = {
     lShip: [[[0,0],[0,1],[0,2],[1,2]],
-            [[0,1],[1,1],[2,0],[2,1]],
-            [[0,0],[1,0],[1,1],[1,2]],
-            [[0,0],[0,1],[1,0],[2,0]]],
+            [[0,0],[1,0],[2,0],[2,"-1"]],
+            [[0,0],[0,"-1"],[0,"-2"],["-1","-2"]],
+            [[0,0],["-1",0],["-2",0],["-2",1]]],
     zShip: [[[0,0],[0,1],[1,1],[1,2]],
-            [[0,1],[1,0],[1,1],[2,0]]],
+            [[0,0],[1,0],[1,"-1"],[2,"-1"]],
+            [[0,0],[0,"-1"],["-1","-1"],["-1","-2"]],
+            [[0,0],["-1",0],["-1",1],["-2",1]]],
     sixShip: [[[0,0],[0,1],[0,2],[0,3],[0,4],[0,5]],
-              [[0,0],[1,0],[2,0],[3,0],[4,0],[5,0]]],
+              [[0,0],[1,0],[2,0],[3,0],[4,0],[5,0]],
+              [[0,0],[0,"-1"],[0,"-2"],[0,"-3"],[0,"-4"],[0,"-5"]],
+              [[0,0],["-1",0],["-2",0],["-3",0],["-4",0],["-5",0]]],
     fourShip: [[[0,0],[0,1],[0,2],[0,3]],
-               [[0,0],[1,0],[2,0],[3,0]]],
+              [[0,0],[1,0],[2,0],[3,0]],
+              [[0,0],[0,"-1"],[0,"-2"],[0,"-3"]],
+              [[0,0],["-1",0],["-2",0],["-3",0]]],
     twoShip: [[[0,0],[0,1]],
-              [[0,0],[1,0]]]
+             [[0,0],[1,0]],
+             [[0,0],[0,"-1"]],
+             [[0,0],["-1",0]]]
 }
 
 const tools = {
@@ -55,7 +63,7 @@ const gFX = {
         ["images/ship-front.png","images/ship-end.png","images/ship-front.png","images/ship-end.png"], //zShip
         ["images/ship-front.png","images/ship-middle.png","images/ship-middle.png","images/ship-middle.png","images/ship-middle.png","images/ship-end.png"], //sixShip
         ["images/ship-front.png","images/ship-middle.png","images/ship-middle.png","images/ship-end.png"], //fourShip
-        ["images/ship-front.png","images/ship-end.png"]
+        ["images/2ship-front.png","images/2ship-end.png"]
     ]
 }
 
@@ -451,25 +459,34 @@ function renderHover(coords) {
 function renderCells(board, playerName, hiddenEls) {
     for (let y=0; y<10; y++) {
         for (let x=0; x<10; x++) {
+            let cellEl = document.getElementById(`${x}-${y} ${playerName}`);
+            let cell = board[x][y];
             if (board[x][y].hasShip && board[x][y].isHit) {
                 if (blue.shipHealth[blue.board[x][y].shipIndex] <= 0
                     || !hiddenEls) {
-                        document.getElementById(`${x}-${y} ${playerName}`).style.backgroundImage = 'url("'+gFX.ships[board[x][y].shipIndex][board[x][y].shipSection]+'")'
-                }
-                document.getElementById(`${x}-${y} ${playerName}`).innerHTML = '<img src="images/hit.png">';
+                        renderShips(cellEl, cell)
+                    }
+                cellEl.innerHTML = '<img src="images/hit.png">';
             }
             else if (board[x][y].hasShip && !hiddenEls) {
-                document.getElementById(`${x}-${y} ${playerName}`).style.backgroundImage = 'url("'+gFX.ships[board[x][y].shipIndex][board[x][y].shipSection]+'")'                
+                renderShips(cellEl, cell);
             }
             else if (board[x][y].isHit) {
-                document.getElementById(`${x}-${y} ${playerName}`).innerHTML = '<img src="images/miss.png">';
+                cellEl.innerHTML = '<img src="images/miss.png">';
             }
             else {
-                document.getElementById(`${x}-${y} ${playerName}`).innerHTML = '';
-                document.getElementById(`${x}-${y} ${playerName}`).style.backgroundImage = '';
+                cellEl.innerHTML = '';
+                cellEl.style.backgroundImage = '';
             }
         }
     }
+}
+
+function renderShips(cellEl, cell) {
+    cellEl.style.backgroundImage = 'url("'+gFX.ships[cell.shipIndex][cell.shipSection]+'")';
+    if (cell.shipRotation == 1) cellEl.classList.add("rotate90");
+    else if (cell.shipRotation == 2) cellEl.classList.add("rotate180");
+    else if (cell.shipRotation == 3) cellEl.classList.add("rotate270");
 }
 
 initialize();

@@ -7,15 +7,15 @@ body {
 main {
     margin: 0 auto;
     display: flex;
-    height: 90vh;
-    min-height: 720px;
     width: 80%;
     justify-content: center;
     background-color: white;
+    padding-top: 2%;
 }
 
 #red-player {
     width: 45vw;
+    min-width: ;
 }
 
 #blue-player {
@@ -29,11 +29,11 @@ main {
 }
 
 #red-player .board {
-    margin: 5% 5% auto auto;
+    margin: 0 5% 5% auto;
 }
 
 #blue-player .board {
-    margin: 5% auto auto 5%;
+    margin: 0 auto 5% 5%;
 }
 
 .board:after {
@@ -76,4 +76,16 @@ main {
 
 #blue-player .cell {
     border: 1px solid lightblue;
+}
+
+.rotate90 {
+    transform: rotate(90deg)
+}
+
+.rotate180 {
+    transform: rotate(180deg)
+}
+
+.rotate270 {
+    transform: rotate(270deg)
 }
