@@ -1,6 +1,7 @@
 body {
     box-sizing: border-box;
     text-align: center;
+    background-color: aliceblue;
 }
 
 main {
@@ -8,7 +9,9 @@ main {
     display: flex;
     height: 90vh;
     min-height: 720px;
+    width: 80%;
     justify-content: center;
+    background-color: white;
 }
 
 #red-player {
@@ -21,7 +24,7 @@ main {
 
 .board {
     position: relative;
-    width: 60%;
+    width: 90%;
     border: none;
 }
 

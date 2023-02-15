@@ -47,6 +47,18 @@ const sFX = {
     miss: new Audio('audio/miss.mp3')
 }
 
+const gFX = {
+    hit: 0,
+    miss: 0,
+    ships:[
+        ["images/ship-front.png","images/ship-middle.png","images/ship-end.png","images/ship-front.png"], //lShip
+        ["images/ship-front.png","images/ship-end.png","images/ship-front.png","images/ship-end.png"], //zShip
+        ["images/ship-front.png","images/ship-middle.png","images/ship-middle.png","images/ship-middle.png","images/ship-middle.png","images/ship-end.png"], //sixShip
+        ["images/ship-front.png","images/ship-middle.png","images/ship-middle.png","images/ship-end.png"], //fourShip
+        ["images/ship-front.png","images/ship-end.png"]
+    ]
+}
+
 //Stores AI functions and states
 const AI = {
     //States
@@ -81,18 +93,17 @@ const AI = {
     },
     //Place missiles on board
     placeToBoard: function(coords) {
-        if (isValid(coords, red)) {
+        setTimeout(() => {
+            if (isValid(coords, red)) {
             coords.forEach(function(coord) {
                 let cell = red.board[coord[0]][coord[1]];
                 cell.isHit = true;
                 if (cell.hasShip) {
-                    sFX.hit.play();
+                    sFX.hit.cloneNode().play();
                     red.shipHealth[cell.shipIndex]--;
                     if (red.shipHealth[cell.shipIndex]<=0){
                         AI.targetCell = null;
                         AI.targetPrevHits();
-                        console.log("has ship target cell prev hit")
-                        console.log(AI.targetCell)
                         AI.currentDirection = null;
                     }
                     else {
@@ -105,6 +116,7 @@ const AI = {
                     blue.prevPlays.push(coords);
                 }
                 else {
+                    sFX.miss.cloneNode().play();
                     blue.prevPlays.push(coords);
                     AI.currentDirection = null;
                     AI.directionsTried = [];
@@ -113,6 +125,7 @@ const AI = {
             })
         }
         play()
+    }, 500)
     },
     //Pick random spot on board and fire missile
     randomMissile: function(min, max) {
@@ -135,8 +148,6 @@ const AI = {
         let computedCoords = computeCoords(AI.targetCell, direction);
         if (AI.directionsTried.length >= 4) {
             AI.targetPrevHits();
-            console.log("target cell prev hit")
-            console.log(AI.targetCell)
             AI.currentDirection = null;
             AI.directionsTried = [];
         }
@@ -146,7 +157,6 @@ const AI = {
         for (let i = blue.prevPlays.length-1; i >= 0; i--) {
             let y = blue.prevPlays[i][0][0];
             let x = blue.prevPlays[i][0][1];
-            console.log(red.shipHealth[red.board[y][x].shipIndex]);
             if (red.board[y][x].hasShip 
                 && red.board[y][x].isHit 
                 && red.shipHealth[red.board[y][x].shipIndex] > 0) {
@@ -186,19 +196,19 @@ const redCellEls = document.querySelectorAll('#red-player .cell');
 function initBoardEvents(boardEl) {
     boardEl.addEventListener("click", boardClicked);
     document.addEventListener("keypress", rotateItem)
-    boardEl.addEventListener("mousemove", cellHovered);
 }
 
 function killBoardEvents(boardEl) {
     boardEl.removeEventListener("click", boardClicked);
     document.removeEventListener("keypress", rotateItem)
-    boardEl.removeEventListener("mousemove", cellHovered);
 }
 
 function initHoverEvents(boardEl) {
+    boardEl.addEventListener("mousemove", cellHovered);
 }
 
 function killHoverEvents(boardEl) {
+    boardEl.removeEventListener("mousemove", cellHovered);
 }
 
 /*----- functions -----*/
@@ -243,11 +253,13 @@ function play() {
         alert("Blue wins");
         killBoardEvents(redBoardEl)
         killBoardEvents(blueBoardEl)
+        renderCells(blue.board, "blue", false);
     }
     else if (!blue.shipHealth.reduce((acc,s) => acc + s, 0)) {
         alert("Red wins");
         killBoardEvents(redBoardEl)
         killBoardEvents(blueBoardEl)
+        renderCells(blue.board, "blue", false);
     }
 
     //AI plays
@@ -272,6 +284,8 @@ function play() {
             if (shipIndex == 5) {
                 killBoardEvents(redBoardEl);
                 killHoverEvents(redBoardEl);
+                currentBoard = "blue"
+                initHoverEvents(blueBoardEl);
                 red.placingShips = false;
                 swapPlayers();
                 play();
@@ -290,7 +304,6 @@ function play() {
         //Player turn continues in boardClicked()
         else {
             initBoardEvents(blueBoardEl);
-            initHoverEvents(blueBoardEl);
         }
     }
 }
@@ -330,6 +343,7 @@ function boardClicked(e) {
                 shipIndex++;
                 shipRotation=0;
             }
+            killBoardEvents(blueBoardEl);
             play();
         }
         else {
@@ -382,7 +396,6 @@ function swapPlayers() {
     selectedTool.name = "missile";
     selectedCell = null;
     currentPlayer = currentPlayer*-1;
-    currentBoard = currentPlayer == 1 ? "blue":"red";
     compTarget = null;
     compDirection = null;
     shipIndex = 0;
@@ -439,16 +452,14 @@ function renderCells(board, playerName, hiddenEls) {
     for (let y=0; y<10; y++) {
         for (let x=0; x<10; x++) {
             if (board[x][y].hasShip && board[x][y].isHit) {
-                if (blue.shipHealth[blue.board[x][y].shipIndex] <= 0) {
-                    if (board[x][y].shipSection == 0) document.getElementById(`${x}-${y} ${playerName}`).style.backgroundImage = 'url("images/ship-front.png")';
-                    else document.getElementById(`${x}-${y} ${playerName}`).style.backgroundImage = 'url("images/ship-middle.png")';
+                if (blue.shipHealth[blue.board[x][y].shipIndex] <= 0
+                    || !hiddenEls) {
+                        document.getElementById(`${x}-${y} ${playerName}`).style.backgroundImage = 'url("'+gFX.ships[board[x][y].shipIndex][board[x][y].shipSection]+'")'
                 }
                 document.getElementById(`${x}-${y} ${playerName}`).innerHTML = '<img src="images/hit.png">';
             }
             else if (board[x][y].hasShip && !hiddenEls) {
-                if (board[x][y].shipSection == 0) document.getElementById(`${x}-${y} ${playerName}`).style.backgroundImage = 'url("images/ship-front.png")';
-                else document.getElementById(`${x}-${y} ${playerName}`).style.backgroundImage = 'url("images/ship-middle.png")';
-                
+                document.getElementById(`${x}-${y} ${playerName}`).style.backgroundImage = 'url("'+gFX.ships[board[x][y].shipIndex][board[x][y].shipSection]+'")'                
             }
             else if (board[x][y].isHit) {
                 document.getElementById(`${x}-${y} ${playerName}`).innerHTML = '<img src="images/miss.png">';
