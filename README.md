@@ -4,17 +4,17 @@ Battleship is a two player strategy game that became popular during World War 1.
 
 My battleship game includes a simple AI to act as the other player. It will fire at random cells on the board until it hits a ship. When it hits a ship it will move in a random direction until that ship is destroyed or there are no more valid directions to move. It will then cycle through it's previous plays until it finds a hit cell with a valid direction open next to it. 
 
-## Screenshots:
+## Screenshots
 ![Placing Ships](Screenshot%202023-02-16%20at%2011-50-15%20Battleship.png)
 ![Playing Game](Screenshot%202023-02-16%20at%2011-50-57%20Battleship.png)
 ![Ship Sunk](Screenshot%202023-02-16%20at%2011-49-41%20Battleship.png)
 
-## Technologies used:
+## Technologies used
 
 This game uses HTML, CSS and Javascript
 
 
-## Getting Started: 
+## Getting Started 
 
 ### Playing the game
 You will start as the red player.
@@ -37,3 +37,4 @@ Resume your current game by pressing the 'Resume Game' menu button.
 - Add in points system
 - Add in other tools such as radar or mine
 - Find better sound effects 
+- Make better assets
