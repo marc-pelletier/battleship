@@ -52,7 +52,9 @@ const selectedTool = {
 
 const sFX = {
     hit: new Audio('audio/hit.mp3'),
-    miss: new Audio('audio/miss.mp3')
+    miss: new Audio('audio/miss.mp3'),
+    ship: new Audio('audio/ship.mp3'),
+    click: new Audio('audio/click.wav')
 }
 
 const gFX = {
@@ -242,28 +244,33 @@ function killHoverEvents(boardEl) {
 }
 
 restartBtn[0].addEventListener("click", () => {
+    sFX.click.play();
     initialize();
     overlayEl.classList.add("hidden");
     menuEl.classList.add("hidden");
 })
 
 resumeBtn[0].addEventListener("click", () => {
+    sFX.click.play();
     overlayEl.classList.add("hidden");
     menuEl.classList.add("hidden");
 })
 
 restartBtn[1].addEventListener("click", () => {
+    sFX.click.play();
     initialize();
     overlayEl.classList.add("hidden");
     winscreenEl.classList.add("hidden");
 })
 
 resumeBtn[1].addEventListener("click", () => {
+    sFX.click.play();
     overlayEl.classList.add("hidden");
     winscreenEl.classList.add("hidden");
 })
 
 menuBtn.addEventListener("click", () => {
+    sFX.click.play();
     overlayEl.classList.remove("hidden");
     menuEl.classList.remove("hidden");
 })
@@ -413,6 +420,9 @@ function boardClicked(e) {
                     cell.shipSection = section;
                     cell.shipRotation = shipRotation;
                     cell.shipIndex = shipIndex;
+                    let shipSound = sFX.ship.cloneNode();
+                    shipSound.volume = volumeSlider.value;
+                    shipSound.play();
                 }
             })
             if (red.placingShips) {
