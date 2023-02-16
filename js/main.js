@@ -163,7 +163,6 @@ const AI = {
             AI.currentDirection = null;
             AI.directionsTried = [];
         }
-        console.log(AI.targetCell)
         AI.placeToBoard(computedCoords)
     },
     targetPrevHits: function() {
@@ -174,18 +173,14 @@ const AI = {
             let yNeg = y-1;
             let xPos = x+1;
             let xNeg = x-1;
-            console.log(xPos)
             if (red.board[y][x].hasShip == true
                 && red.board[y][x].isHit == true
                 && red.shipHealth[red.board[y][x].shipIndex] > 0
-                && (isValid(red, [[yPos,x]])
-                || isValid(red, [[yNeg,x]])
-                || isValid(red, [[y,xPos]])
-                || isValid(red, [[y,xNeg]]))) {
-                    console.log("we are here")
+                && (isValid([[yPos,x]], red)
+                || isValid([[yNeg,x]], red)
+                || isValid([[y,xPos]], red)
+                || isValid([[y,xNeg]], red))) {
                     AI.targetCell = [[y,x]];
-                    console.log(y)
-                    console.log(AI.targetCell)
                 }
         }
     },
