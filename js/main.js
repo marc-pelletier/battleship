@@ -163,16 +163,29 @@ const AI = {
             AI.currentDirection = null;
             AI.directionsTried = [];
         }
+        console.log(AI.targetCell)
         AI.placeToBoard(computedCoords)
     },
     targetPrevHits: function() {
         for (let i = blue.prevPlays.length-1; i >= 0; i--) {
             let y = blue.prevPlays[i][0][0];
             let x = blue.prevPlays[i][0][1];
-            if (red.board[y][x].hasShip 
-                && red.board[y][x].isHit 
-                && red.shipHealth[red.board[y][x].shipIndex] > 0) {
+            let yPos = y+1;
+            let yNeg = y-1;
+            let xPos = x+1;
+            let xNeg = x-1;
+            console.log(xPos)
+            if (red.board[y][x].hasShip == true
+                && red.board[y][x].isHit == true
+                && red.shipHealth[red.board[y][x].shipIndex] > 0
+                && (isValid(red, [[yPos,x]])
+                || isValid(red, [[yNeg,x]])
+                || isValid(red, [[y,xPos]])
+                || isValid(red, [[y,xNeg]]))) {
+                    console.log("we are here")
                     AI.targetCell = [[y,x]];
+                    console.log(y)
+                    console.log(AI.targetCell)
                 }
         }
     },

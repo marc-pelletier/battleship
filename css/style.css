@@ -1,7 +1,33 @@
+@media (max-width: 730px) {
+    body {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    main {
+        flex-direction: column;
+        width: 100%;
+        min-width: 98% !important;
+        max-width: 99%;
+        justify-content: center;
+        align-items: center;
+        margin: 0;
+    }
+    #red-player {
+        width:65vw !important;
+    }
+    #blue-player {
+        width:65vw !important;
+    }
+    .board {
+        width: 95%;
+    }
+}
+
 body {
     box-sizing: border-box;
     text-align: center;
-    background-color: aliceblue;
+    background-image: url("../images/background.png");
 }
 
 h1 {
@@ -19,7 +45,6 @@ main {
     width: 80%;
     position: relative;
     justify-content: center;
-    background-color: white;
     padding-top: 2%;
     min-width: 730px;
 }
@@ -129,8 +154,10 @@ main {
 #menu {
     height: 300px;
     width: 265px;
-    background-color: grey;
-    margin: 5% auto;
+    background-color: rgba(173, 216, 230, 0.8);
+    margin: 10% auto;
+    border: 3px solid black;
+    border-radius: 20px;
 }
 
 .menu-button {
@@ -145,13 +172,20 @@ main {
     background-color: white;
 }
 
+.menu-button:active {
+    padding: 4px;
+    margin: 11px;
+}
+
 #win-screen {
     position: absolute;
     width: 265px;
     height: 200px;
-    top: 20%;
-    background-color: gray;
+    top: 30%;
+    background-color: rgba(173, 216, 230, 0.8);
     margin: 0 auto;
+    border: 3px solid black;
+    border-radius: 20px;
 }
 
 #win-screen h3 {
@@ -169,6 +203,10 @@ main {
     background-size: 100%;
     border: 3px solid rgb(195, 195, 195);
     border-radius: 8px;
+}
+
+#menubtn:hover {
+    cursor: pointer;
 }
 
 .hidden {
