@@ -33,8 +33,6 @@ Start a new game by pressing the 'New Game' menu button.
 Resume your current game by pressing the 'Resume Game' menu button.
 
 ## Next steps:
-- Let player choose their board
-- Let player choose neither board
 - Add in points system
 - Add in other tools such as radar or mine
 - Find better sound effects 
