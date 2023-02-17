@@ -10,7 +10,6 @@ class Cell {
 class Player {
     constructor(name, board, isComp) {
         this.name = name;
-        this.isComp = true;
         this.placingShips = true;
         this.shipHealth = [4,4,6,4,2];
         this.prevPlays = [];

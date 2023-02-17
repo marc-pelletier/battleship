@@ -18,7 +18,7 @@ This game uses HTML, CSS and Javascript
 
 
 ### Playing the game
-[Click here](https://marc-pelletier.github.io/battleship/) to open the github pages deployment. You will start as the red player.
+[Click here](https://marc-pelletier.github.io/battleship/) to open the github pages deployment. Start the game by choosing a player. If you would like to watch two computer players play, click neither.
 
 At the start of the game, you will be asked to place your ships. Rotate your ships by using the mouse wheel or pressing your 'R' key. Place your ships in your desired location by clicking on your board. You will see a green highlight for valid placements and a red highlight for invalid placements. 
 
