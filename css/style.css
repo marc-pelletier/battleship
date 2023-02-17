@@ -212,3 +212,43 @@ main {
 .hidden {
     display: none !important;
 }
+
+#select-screen {
+    position: absolute;
+    width: 265px;
+    height: 300px;
+    top: 30%;
+    background-color: rgba(173, 216, 230, 0.8);
+    margin: 0 auto;
+    border: 3px solid black;
+    border-radius: 20px;
+}
+
+.select-button{
+    display: block;
+    width: 100px;
+    padding: 20px;
+    background-color: gray;
+    border: 3px solid rgb(63, 63, 63);
+    margin: 10px auto;
+    border-radius: 10px;
+}
+
+.select-button:hover {
+    cursor: pointer;
+}
+
+.select-button:active {
+    padding: 18px;
+    margin: 12px auto;
+}
+
+#select-screen > div:nth-of-type(1) {
+    background-color: salmon;
+    border: 3px solid darkred;
+}
+
+#select-screen > div:nth-of-type(2) {
+    background-color:lightskyblue;
+    border: 3px solid darkblue;
+}

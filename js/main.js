@@ -216,6 +216,8 @@ const menuBtn = document.getElementById("menubtn");
 const menuEl = document.getElementById("menu");
 const winscreenEl = document.getElementById("win-screen");
 const winMessage = document.querySelector("#win-screen h3");
+const selectScreenEl = document.getElementById("select-screen");
+const selectBtn = document.querySelectorAll(".select-button");
 
 /*----- event listeners -----*/
 function initBoardEvents(boardEl) {
@@ -236,13 +238,13 @@ function initHoverEvents(boardEl) {
 
 function killHoverEvents(boardEl) {
     boardEl.removeEventListener("mousemove", cellHovered);
+    renderHover(null);
 }
 
 restartBtn[0].addEventListener("click", () => {
     sFX.click.play();
-    initialize();
-    overlayEl.classList.add("hidden");
     menuEl.classList.add("hidden");
+    selectScreenEl.classList.remove("hidden");
 })
 
 resumeBtn[0].addEventListener("click", () => {
@@ -253,9 +255,8 @@ resumeBtn[0].addEventListener("click", () => {
 
 restartBtn[1].addEventListener("click", () => {
     sFX.click.play();
-    initialize();
-    overlayEl.classList.add("hidden");
     winscreenEl.classList.add("hidden");
+    selectScreenEl.classList.remove("hidden");
 })
 
 resumeBtn[1].addEventListener("click", () => {
@@ -268,6 +269,27 @@ menuBtn.addEventListener("click", () => {
     sFX.click.play();
     overlayEl.classList.remove("hidden");
     menuEl.classList.remove("hidden");
+})
+
+selectBtn[0].addEventListener("click", () => {
+    sFX.click.play();
+    selectScreenEl.classList.add("hidden");
+    overlayEl.classList.add("hidden");
+    initialize("1");
+})
+
+selectBtn[1].addEventListener("click", () => {
+    sFX.click.play();
+    selectScreenEl.classList.add("hidden");
+    overlayEl.classList.add("hidden");
+    initialize("-1");
+})
+
+selectBtn[2].addEventListener("click", () => {
+    sFX.click.play();
+    selectScreenEl.classList.add("hidden");
+    overlayEl.classList.add("hidden");
+    initialize("0");
 })
 
 /*----- functions -----*/
@@ -326,7 +348,6 @@ function initialize(p) {
         currentBoard = "red";
         currentPlayer = 1;
     }
-    console.log(enemyBoardEl)
     selectedCell = null;
     compTarget = null;
     compDirection = null;
@@ -344,10 +365,18 @@ function initialize(p) {
 //Runs at the end of every turn or when the AI picks an invalid location 
 function play() {
     //Render
-    renderCells(red.board, "red", selectedPlayer == "1" ? false:true);
-    renderCells(blue.board, "blue", selectedPlayer == "-1" ? false:true);
-    renderCells(blue.board, "blue", selectedPlayer == "0" ? false:true);
-    renderCells(red.board, "red", selectedPlayer == "0" ? false:true);
+    if (selectedPlayer == "1") {
+        renderCells(red.board, "red", false)
+        renderCells(blue.board, "blue", true)
+    }
+    else if (selectedPlayer == "-1") {
+        renderCells(red.board, "red", true)
+        renderCells(blue.board, "blue", false)
+    }
+    else {
+        renderCells(red.board, "red", false)
+        renderCells(blue.board, "blue", false)
+    }
     
     //Win check
     if (!red.shipHealth.reduce((acc,s) => acc + s, 0)) {
@@ -386,7 +415,6 @@ function play() {
 
 function compPlays() {
     if (player.placingShips) {
-        console.log("we are here")
         AI.placeShip();
     }
     else if (player.targetCell) {
@@ -535,7 +563,6 @@ function swapPlayers() {
     currentPlayer == 1 ? enemy = blue : enemy = red;
     currentPlayer == 1 ? playerBoardEl = document.querySelector("#red-player .board") : playerBoardEl = document.querySelector("#blue-player .board");
     currentPlayer == 1 ? enemyBoardEl = document.querySelector("#blue-player .board") : enemyBoardEl = document.querySelector("#red-player .board");
-    console.log(playerBoardEl)
     compTarget = null;
     compDirection = null;
     shipIndex = 0;
@@ -586,6 +613,15 @@ function rotateItem(e) {
 
 //renders item to hovered cell
 function renderHover(coords) {
+    if (coords == null) {
+        redCellEls.forEach(function(cell) {
+            cell.style.backgroundColor = 'transparent'
+        });
+        blueCellEls.forEach(function(cell) {
+            cell.style.backgroundColor = 'transparent'
+        });
+        return;
+    }
     redCellEls.forEach(function(cell) {
         cell.style.backgroundColor = 'transparent'
     });
