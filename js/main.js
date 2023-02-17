@@ -8,7 +8,7 @@ class Cell {
 }
 
 class Player {
-    constructor(name, board, isComp) {
+    constructor(name, board) {
         this.name = name;
         this.placingShips = true;
         this.shipHealth = [4,4,6,4,2];
@@ -102,7 +102,6 @@ const AI = {
     //Place missiles on board
     placeToBoard: function(coords) {
         setTimeout(() => {
-            if (isValid(coords, enemy)) {
             coords.forEach(function(coord) {
                 let cell = enemy.board[coord[0]][coord[1]];
                 cell.isHit = true;
@@ -135,14 +134,14 @@ const AI = {
                     swapPlayers();
                 }
             })
-        }
         play()
-    }, 500)
+    }, getRandomNumber(400, 1200))
     },
     //Pick random spot on board and fire missile
     randomMissile: function(min, max) {
         let computedCoords = computeCoords(selectedTool.coords, [getRandomNumber(min,max),getRandomNumber(min,max)]);
-        AI.placeToBoard(computedCoords);
+        if (isValid(computedCoords, enemy)) AI.placeToBoard(computedCoords);
+        else AI.randomMissile(0,9);
     },
     //Walk across board
     walk: function(dir) {
@@ -163,7 +162,8 @@ const AI = {
             player.currentDirection = null;
             player.directionsTried = [];
         }
-        AI.placeToBoard(computedCoords)
+        if (isValid(computedCoords, enemy)) AI.placeToBoard(computedCoords);
+        else AI.walk(getRandomNumber(0,3));
     },
     //Looks for previous hits on ships and finds the earliest hit with valid surrounding directions available
     targetPrevHits: function() {
