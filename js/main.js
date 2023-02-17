@@ -8,12 +8,16 @@ class Cell {
 }
 
 class Player {
-    constructor(name, board) {
+    constructor(name, board, isComp) {
         this.name = name;
+        this.isComp = true;
         this.placingShips = true;
         this.shipHealth = [4,4,6,4,2];
         this.prevPlays = [];
         this.board = board;
+        this.targetCell = null;
+        this.directionsTried = [];
+        this.currentDirection = null;
     }
 }
 
@@ -71,15 +75,10 @@ const gFX = {
 
 //Stores AI functions and states
 const AI = {
-    //States
-    targetCell: null,
-    directionsTried: [],
-    currentDirection: null,
-    
     //Places ship in cell object
     placeShip: function() {
         if (shipIndex == 5) {
-            blue.placingShips = false;
+            player.placingShips = false;
             swapPlayers();
         }
         else {
@@ -87,9 +86,9 @@ const AI = {
             selectedTool.coords = ships[Object.keys(ships)[shipIndex]][shipRotation];
             selectedTool.name = "ship";
             let computedCoords = computeCoords(selectedTool.coords, [getRandomNumber(0,9),getRandomNumber(0,9)]);
-            if (isValid(computedCoords, blue)) {
+            if (isValid(computedCoords, player)) {
                 computedCoords.forEach(function(coord, section) {
-                    let cell = blue.board[coord[0]][coord[1]];
+                    let cell = player.board[coord[0]][coord[1]];
                     cell.hasShip = true;
                     cell.shipName = selectedTool.name;
                     cell.shipSection = section;
@@ -104,36 +103,36 @@ const AI = {
     //Place missiles on board
     placeToBoard: function(coords) {
         setTimeout(() => {
-            if (isValid(coords, red)) {
+            if (isValid(coords, enemy)) {
             coords.forEach(function(coord) {
-                let cell = red.board[coord[0]][coord[1]];
+                let cell = enemy.board[coord[0]][coord[1]];
                 cell.isHit = true;
                 if (cell.hasShip) {
                     let hitSound = sFX.hit.cloneNode();
                     hitSound.volume = volumeSlider.value;
                     hitSound.play();
-                    red.shipHealth[cell.shipIndex]--;
-                    if (red.shipHealth[cell.shipIndex]<=0){
-                        AI.targetCell = null;
+                    enemy.shipHealth[cell.shipIndex]--;
+                    if (enemy.shipHealth[cell.shipIndex]<=0){
+                        player.targetCell = null;
                         AI.targetPrevHits();
-                        AI.currentDirection = null;
+                        player.currentDirection = null;
                     }
                     else {
                         if (getRandomNumber(0,99) < 20) {
-                            AI.currentDirection = null;
+                            player.currentDirection = null;
                         }
-                        AI.targetCell = coords;
+                        player.targetCell = coords;
                     }
-                    AI.directionsTried = [];
-                    blue.prevPlays.push(coords);
+                    player.directionsTried = [];
+                    player.prevPlays.push(coords);
                 }
                 else {
                     let missSound = sFX.miss.cloneNode();
                     missSound.volume = volumeSlider.value;
                     missSound.play();
-                    blue.prevPlays.push(coords);
-                    AI.currentDirection = null;
-                    AI.directionsTried = [];
+                    player.prevPlays.push(coords);
+                    player.currentDirection = null;
+                    player.directionsTried = [];
                     swapPlayers();
                 }
             })
@@ -151,45 +150,41 @@ const AI = {
         let directions = [["-1", 0],[0, 1],[1, 0],[0, "-1"]];
         let direction = [directions[dir][0],directions[dir][1]];
         let hasTried = false;
-        for (let triedDir of AI.directionsTried) {
+        for (let triedDir of player.directionsTried) {
             if (triedDir.join() == direction.join()) {
                 hasTried = true;
             }
         }
-        AI.currentDirection = dir;
-        if (hasTried) AI.currentDirection = null;
-        else AI.directionsTried.push(direction);
-        let computedCoords = computeCoords(AI.targetCell, direction);
-        if (AI.directionsTried.length >= 4) {
+        player.currentDirection = dir;
+        if (hasTried) player.currentDirection = null;
+        else player.directionsTried.push(direction);
+        let computedCoords = computeCoords(player.targetCell, direction);
+        if (player.directionsTried.length >= 4) {
             AI.targetPrevHits();
-            AI.currentDirection = null;
-            AI.directionsTried = [];
+            player.currentDirection = null;
+            player.directionsTried = [];
         }
         AI.placeToBoard(computedCoords)
     },
+    //Looks for previous hits on ships and finds the earliest hit with valid surrounding directions available
     targetPrevHits: function() {
-        for (let i = blue.prevPlays.length-1; i >= 0; i--) {
-            let y = blue.prevPlays[i][0][0];
-            let x = blue.prevPlays[i][0][1];
+        for (let i = player.prevPlays.length-1; i >= 0; i--) {
+            let y = player.prevPlays[i][0][0];
+            let x = player.prevPlays[i][0][1];
             let yPos = y+1;
             let yNeg = y-1;
             let xPos = x+1;
             let xNeg = x-1;
-            if (red.board[y][x].hasShip == true
-                && red.board[y][x].isHit == true
-                && red.shipHealth[red.board[y][x].shipIndex] > 0
-                && (isValid([[yPos,x]], red)
-                || isValid([[yNeg,x]], red)
-                || isValid([[y,xPos]], red)
-                || isValid([[y,xNeg]], red))) {
-                    AI.targetCell = [[y,x]];
+            if (enemy.board[y][x].hasShip == true
+                && enemy.board[y][x].isHit == true
+                && enemy.shipHealth[enemy.board[y][x].shipIndex] > 0
+                && (isValid([[yPos,x]], enemy)
+                || isValid([[yNeg,x]], enemy)
+                || isValid([[y,xPos]], enemy)
+                || isValid([[y,xNeg]], enemy))) {
+                    player.targetCell = [[y,x]];
                 }
         }
-    },
-    wait: function(t) {
-        let startTime = new Date().getTime();
-        let currentTime = new Date().getTime();
-        while (currentTime < startTime + t) currentTime = new Date().getTime();
     }
 }
 
@@ -205,12 +200,12 @@ let currentBoard;
 let shipIndex;
 let shipRotation;
 let hoveredCellCoords;
+let player;
+let enemy;
+let playerBoardEl;
+let enemyBoardEl;
 
 /*----- cached element references -----*/
-const blueBoardEl = document.querySelector("#blue-player .board");
-const redBoardEl = document.querySelector("#red-player .board");
-const blueRowEls = document.querySelectorAll("#blue-player .row");
-const redRowEls = document.querySelectorAll("#red-player .row");
 const blueCellEls = document.querySelectorAll('#blue-player .cell');
 const redCellEls = document.querySelectorAll('#red-player .cell');
 const volumeSlider = document.getElementById("sound-slider");
@@ -278,9 +273,9 @@ menuBtn.addEventListener("click", () => {
 /*----- functions -----*/
 
 //Playing the game
-function initialize() {
-    killHoverEvents(redBoardEl);
-    killHoverEvents(blueBoardEl);
+
+//initialize game board
+function initialize(p) {
     for (cell of blueCellEls) {
         cell.classList.remove("rotate90")
         cell.classList.remove("rotate180")
@@ -305,107 +300,154 @@ function initialize() {
             blueBoard[x].push(new Cell());
         }
     }
-    red = new Player("1", redBoard);
-    blue = new Player("-1", blueBoard);
-    selectedPlayer = "1";
+    selectedPlayer = p;
+    currentPlayer = p;
+    red = new Player("1", redBoard, selectedPlayer == "1" ? false:true);
+    blue = new Player("-1", blueBoard, selectedPlayer == "-1" ? false:true);
+    if (selectedPlayer == "1") {
+        player = red;
+        enemy = blue;
+        playerBoardEl = document.querySelector("#red-player .board");
+        enemyBoardEl = document.querySelector("#blue-player .board");
+        currentBoard = "red";
+    }
+    else if (selectedPlayer == "-1"){
+        player = blue;
+        enemy = red;
+        playerBoardEl = document.querySelector("#blue-player .board");
+        enemyBoardEl = document.querySelector("#red-player .board");
+        currentBoard = "blue";
+    }
+    else {
+        player = red;
+        enemy = blue;
+        playerBoardEl = document.querySelector("#red-player .board");
+        enemyBoardEl = document.querySelector("#blue-player .board");
+        currentBoard = "red";
+        currentPlayer = 1;
+    }
+    console.log(enemyBoardEl)
     selectedCell = null;
-    currentPlayer = "1";
-    currentBoard = "red";
     compTarget = null;
     compDirection = null;
     shipIndex = 0;
     shipRotation = 0;
     hoveredCellCoords = [null, null]
+    killBoardEvents(playerBoardEl);
+    killHoverEvents(playerBoardEl);
+    killBoardEvents(enemyBoardEl);
+    killHoverEvents(enemyBoardEl);
     play()
 }
 
+
+//Runs at the end of every turn or when the AI picks an invalid location 
 function play() {
     //Render
-    renderCells(red.board, "red", false);
-    renderCells(blue.board, "blue", true);
+    renderCells(red.board, "red", selectedPlayer == "1" ? false:true);
+    renderCells(blue.board, "blue", selectedPlayer == "-1" ? false:true);
+    renderCells(blue.board, "blue", selectedPlayer == "0" ? false:true);
+    renderCells(red.board, "red", selectedPlayer == "0" ? false:true);
     
     //Win check
     if (!red.shipHealth.reduce((acc,s) => acc + s, 0)) {
         winMessage.textContent = "Blue has won!"
         overlayEl.classList.remove("hidden");
         winscreenEl.classList.remove("hidden");
-        killBoardEvents(redBoardEl);
-        killBoardEvents(blueBoardEl);
+        killBoardEvents(playerBoardEl);
+        killBoardEvents(enemyBoardEl);
         renderCells(blue.board, "blue", false);
     }
     else if (!blue.shipHealth.reduce((acc,s) => acc + s, 0)) {
         winMessage.textContent = "Red has won!"
         overlayEl.classList.remove("hidden");
         winscreenEl.classList.remove("hidden");
-        killBoardEvents(redBoardEl)
-        killBoardEvents(blueBoardEl)
+        killBoardEvents(playerBoardEl)
+        killBoardEvents(enemyBoardEl)
         renderCells(blue.board, "blue", false);
     }
 
     //AI plays
     else if (currentPlayer == "-1") {
-        if (blue.placingShips) {
-            AI.placeShip();
-        }
-        else if (AI.targetCell) {
-            if (AI.currentDirection) AI.walk(AI.currentDirection);
-            else AI.walk(getRandomNumber(0,3));
-        }
-        else {
-            AI.randomMissile(0,9);
-        }
+        if (selectedPlayer == currentPlayer) humanPlays(); 
+        else compPlays();
     }
 
     //Player plays
     else if (currentPlayer == "1") {
-        //Check if placing ships
-        if (red.placingShips) {
-            //Check if all ships are placed and turn off placing ships
-            if (shipIndex == 5) {
-                killBoardEvents(redBoardEl);
-                killHoverEvents(redBoardEl);
-                currentBoard = "blue"
-                initHoverEvents(blueBoardEl);
-                red.placingShips = false;
-                swapPlayers();
-                play();
-            }
-            //set selectedTool, initialize board events and end function. 
-            //Player turn continues in boardClicked()
-            else{
-                let shipName = Object.keys(ships)[shipIndex];
-                selectedTool.coords = ships[shipName][shipRotation];
-                selectedTool.name = shipName;
-                initBoardEvents(redBoardEl);
-                initHoverEvents(redBoardEl);
-            }
-        }
-        //initialize blue board events. 
-        //Player turn continues in boardClicked()
-        else {
-            initBoardEvents(blueBoardEl);
-        }
+        if (selectedPlayer == currentPlayer) humanPlays(); 
+        else compPlays();
+    }
+
+    else {
+        compPlays();
     }
 }
+
+function compPlays() {
+    if (player.placingShips) {
+        console.log("we are here")
+        AI.placeShip();
+    }
+    else if (player.targetCell) {
+        if (player.currentDirection) AI.walk(player.currentDirection);
+        else AI.walk(getRandomNumber(0,3));
+    }
+    else {
+        AI.randomMissile(0,9);
+    }
+}
+
+function humanPlays() {
+    //Check if placing ships
+    if (player.placingShips) {
+        //Check if all ships are placed and turn off placing ships
+        if (shipIndex == 5) {
+            killBoardEvents(playerBoardEl);
+            killHoverEvents(playerBoardEl);
+            selectedPlayer == "1" ? currentBoard = "blue": currentBoard = "red"
+            initHoverEvents(enemyBoardEl);
+            player.placingShips = false;
+            swapPlayers();
+            play();
+        }
+        //set selectedTool, initialize board events and end function 
+        //Player turn continues in boardClicked()
+        else{
+            let shipName = Object.keys(ships)[shipIndex];
+            selectedTool.coords = ships[shipName][shipRotation];
+            selectedTool.name = shipName;
+            initBoardEvents(playerBoardEl);
+            initHoverEvents(playerBoardEl);
+        }
+    }
+    //initialize blue board events. 
+    //Player turn continues in boardClicked()
+    else {
+        initBoardEvents(enemyBoardEl);
+    }
+}
+
 
 function boardClicked(e) {
     //Return if anything but cell clicked
     if (e.target.className != 'cell') {
         return;
     }
+    //else place selected tool to board, swap players, and play() again
+    //or place ships if placingShips is true
     else {
         selectedCell = idToArray(e.target.id);
         let computedCoords = computeCoords(selectedTool.coords, selectedCell);
         if (isValid(computedCoords, currentBoard == 'red' ? red:blue)) {
             computedCoords.forEach(function(coord, section) {
-                let cell = red.board[coord[0]][coord[1]];
                 if (selectedTool.name == "missile") {
-                    blue.board[coord[0]][coord[1]].isHit = true;
-                    if (blue.board[coord[0]][coord[1]].hasShip == true) {
+                    enemy.board[coord[0]][coord[1]].isHit = true;
+                    if (enemy.board[coord[0]][coord[1]].hasShip == true) {
                         let hitSound = sFX.hit.cloneNode();
                         hitSound.volume = volumeSlider.value;
                         hitSound.play();
-                        blue.shipHealth[blue.board[coord[0]][coord[1]].shipIndex]--;
+                        enemy.shipHealth[enemy.board[coord[0]][coord[1]].shipIndex]--;
                     }
                     else{
                         let missSound = sFX.miss.cloneNode();
@@ -415,6 +457,7 @@ function boardClicked(e) {
                     }
                 }
                 else {
+                    let cell = player.board[coord[0]][coord[1]];
                     cell.hasShip = true;
                     cell.shipName = selectedTool.name;
                     cell.shipSection = section;
@@ -425,12 +468,12 @@ function boardClicked(e) {
                     shipSound.play();
                 }
             })
-            if (red.placingShips) {
+            if (player.placingShips) {
                 if (shipIndex == 5) swapPlayers();
                 shipIndex++;
                 shipRotation=0;
             }
-            killBoardEvents(blueBoardEl);
+            killBoardEvents(enemyBoardEl);
             play();
         }
         else {
@@ -443,14 +486,17 @@ function boardClicked(e) {
 
 //Getters
 
+//returns cell ids as arrays
 function idToArray(str) {
     return str.substring(0,3).split("-").map(v => parseInt(v));
 }
 
+//returns a random number
 function getRandomNumber(min, max) {
     return Math.floor(Math.random() * (max - min +1)) + min;
 }
 
+//checks if coordinates are valid to place item on given players board
 function isValid(coords, player) {
     for (let i=0;i<coords.length;i++) {
         if (coords[i].some(coord => coord > 9) 
@@ -463,6 +509,7 @@ function isValid(coords, player) {
     return true;
 }
 
+//returns the coordinates of the item or ship plus the selected coordinates
 function computeCoords(item, coords) {
     let newCoords = [];
     newCoords = item.map(
@@ -478,11 +525,17 @@ function computeCoords(item, coords) {
 
 //Setters
 
+//swaps players
 function swapPlayers() {
     selectedTool.coords = tools.missile;
     selectedTool.name = "missile";
     selectedCell = null;
     currentPlayer = currentPlayer*-1;
+    currentPlayer == 1 ? player = red : player = blue;
+    currentPlayer == 1 ? enemy = blue : enemy = red;
+    currentPlayer == 1 ? playerBoardEl = document.querySelector("#red-player .board") : playerBoardEl = document.querySelector("#blue-player .board");
+    currentPlayer == 1 ? enemyBoardEl = document.querySelector("#blue-player .board") : enemyBoardEl = document.querySelector("#red-player .board");
+    console.log(playerBoardEl)
     compTarget = null;
     compDirection = null;
     shipIndex = 0;
@@ -490,6 +543,7 @@ function swapPlayers() {
     hoveredCellCoords = [null, null];
 }
 
+//runs the hovered cell through renderHover 
 function cellHovered(e) {
     if (e.target.className != 'cell') {
         return;
@@ -498,9 +552,10 @@ function cellHovered(e) {
     renderHover(hoveredCellCoords);
 }
 
+//rotates items
 function rotateItem(e) {
     if (e.key == 'r') {
-        if (red.placingShips) {
+        if (player.placingShips) {
             shipRotation++;
             if (shipRotation == ships[Object.keys(ships)[shipIndex]].length) shipRotation=0;
             selectedTool.coords = ships[Object.keys(ships)[shipIndex]][shipRotation];
@@ -508,7 +563,7 @@ function rotateItem(e) {
         }
     }
     else if (Math.sign(e.deltaY) == '1') {
-        if (red.placingShips) {
+        if (player.placingShips) {
             shipRotation++;
             if (shipRotation == ships[Object.keys(ships)[shipIndex]].length) shipRotation = 0;
             selectedTool.coords = ships[Object.keys(ships)[shipIndex]][shipRotation];
@@ -516,7 +571,7 @@ function rotateItem(e) {
         }
     }
     else if (Math.sign(e.deltaY) == '-1') {
-        if (red.placingShips) {
+        if (player.placingShips) {
             shipRotation--;
             if (shipRotation < 0) shipRotation = ships[Object.keys(ships)[shipIndex]].length-1;
             selectedTool.coords = ships[Object.keys(ships)[shipIndex]][shipRotation];
@@ -529,6 +584,7 @@ function rotateItem(e) {
 
 //Render
 
+//renders item to hovered cell
 function renderHover(coords) {
     redCellEls.forEach(function(cell) {
         cell.style.backgroundColor = 'transparent'
@@ -551,13 +607,14 @@ function renderHover(coords) {
     }
 }
 
+//renders ships, hits and misses
 function renderCells(board, playerName, hiddenEls) {
     for (let y=0; y<10; y++) {
         for (let x=0; x<10; x++) {
             let cellEl = document.getElementById(`${x}-${y} ${playerName}`);
             let cell = board[x][y];
             if (board[x][y].hasShip && board[x][y].isHit) {
-                if (blue.shipHealth[blue.board[x][y].shipIndex] <= 0
+                if (enemy.shipHealth[enemy.board[x][y].shipIndex] <= 0
                     || !hiddenEls) {
                         renderShips(cellEl, cell)
                     }
@@ -577,11 +634,10 @@ function renderCells(board, playerName, hiddenEls) {
     }
 }
 
+//renders ships
 function renderShips(cellEl, cell) {
     cellEl.style.backgroundImage = 'url("'+gFX.ships[cell.shipIndex][cell.shipSection]+'")';
     if (cell.shipRotation == 1) cellEl.classList.add("rotate90");
     else if (cell.shipRotation == 2) cellEl.classList.add("rotate180");
     else if (cell.shipRotation == 3) cellEl.classList.add("rotate270");
 }
-
-initialize();
