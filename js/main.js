@@ -501,6 +501,7 @@ function boardClicked(e) {
                 shipRotation=0;
             }
             killBoardEvents(enemyBoardEl);
+            killBoardEvents(playerBoardEl);
             play();
         }
         else {
