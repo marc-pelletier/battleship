@@ -650,10 +650,6 @@ function renderCells(board, playerName, hiddenEls) {
             let cellEl = document.getElementById(`${x}-${y} ${playerName}`);
             let cell = board[x][y];
             if (board[x][y].hasShip && board[x][y].isHit) {
-                if (enemy.shipHealth[enemy.board[x][y].shipIndex] <= 0
-                    || !hiddenEls) {
-                        renderShips(cellEl, cell)
-                    }
                 cellEl.innerHTML = '<img src="images/hit.png">';
             }
             else if (board[x][y].hasShip && !hiddenEls) {
@@ -665,6 +661,9 @@ function renderCells(board, playerName, hiddenEls) {
             else {
                 cellEl.innerHTML = '';
                 cellEl.style.backgroundImage = '';
+            }
+            if (enemy.board[x][y].hasShip && enemy.shipHealth[enemy.board[x][y].shipIndex] == 0 && selectedPlayer == currentPlayer && !hiddenEls) {
+                renderShips(document.getElementById(`${x}-${y} ${playerName=="blue"?"red":"blue"}`),enemy.board[x][y]);
             }
         }
     }
