@@ -651,21 +651,21 @@ function renderCells(board, playerName, hiddenEls) {
         for (let x=0; x<10; x++) {
             let cellEl = document.getElementById(`${x}-${y} ${playerName}`);
             let cell = board[x][y];
-            if (enemy.board[x][y].hasShip && enemy.shipHealth[enemy.board[x][y].shipIndex] == 0 && selectedPlayer == currentPlayer && !hiddenEls && selectedPlayer != "0") {
-                renderShips(document.getElementById(`${x}-${y} ${playerName=="blue"?"red":"blue"}`),enemy.board[x][y]);
-            }
             if (board[x][y].hasShip && board[x][y].isHit) {
                 cellEl.innerHTML = '<img src="images/hit.png">';
             }
             else if (board[x][y].isHit) {
                 cellEl.innerHTML = '<img src="images/miss.png">';
             }
-            else if (board[x][y].hasShip && !hiddenEls) {
-                renderShips(cellEl, cell);
-            }
             else {
                 cellEl.innerHTML = '';
                 cellEl.style.backgroundImage = '';
+            }
+            if (board[x][y].hasShip && !hiddenEls) {
+                renderShips(cellEl, cell);
+            }
+            if (enemy.board[x][y].hasShip && enemy.shipHealth[enemy.board[x][y].shipIndex] == 0 && selectedPlayer == currentPlayer && !hiddenEls && selectedPlayer != "0") {
+                renderShips(document.getElementById(`${x}-${y} ${playerName=="blue"?"red":"blue"}`),enemy.board[x][y]);
             }
         }
     }
