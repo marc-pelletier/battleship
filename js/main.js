@@ -652,11 +652,11 @@ function renderCells(board, playerName, hiddenEls) {
             if (board[x][y].hasShip && board[x][y].isHit) {
                 cellEl.innerHTML = '<img src="images/hit.png">';
             }
-            else if (board[x][y].hasShip && !hiddenEls) {
-                renderShips(cellEl, cell);
-            }
             else if (board[x][y].isHit) {
                 cellEl.innerHTML = '<img src="images/miss.png">';
+            }
+            else if (board[x][y].hasShip && !hiddenEls) {
+                renderShips(cellEl, cell);
             }
             else {
                 cellEl.innerHTML = '';
