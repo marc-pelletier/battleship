@@ -384,7 +384,6 @@ function play() {
         winscreenEl.classList.remove("hidden");
         killBoardEvents(playerBoardEl);
         killBoardEvents(enemyBoardEl);
-        swapPlayers();
         renderCells(blue.board, "blue", false);
     }
     else if (!blue.shipHealth.reduce((acc,s) => acc + s, 0)) {
@@ -393,7 +392,6 @@ function play() {
         winscreenEl.classList.remove("hidden");
         killBoardEvents(playerBoardEl)
         killBoardEvents(enemyBoardEl)
-        swapPlayers();
         renderCells(red.board, "red", false);
     }
 
@@ -651,11 +649,11 @@ function renderCells(board, playerName, hiddenEls) {
         for (let x=0; x<10; x++) {
             let cellEl = document.getElementById(`${x}-${y} ${playerName}`);
             let cell = board[x][y];
-            if (enemy.board[x][y].hasShip && enemy.shipHealth[enemy.board[x][y].shipIndex] == 0 && selectedPlayer == currentPlayer && !hiddenEls && selectedPlayer != "0") {
-                renderShips(document.getElementById(`${x}-${y} ${playerName=="blue"?"red":"blue"}`),enemy.board[x][y]);
-            }
             if (board[x][y].hasShip && !hiddenEls) {
                 renderShips(cellEl, cell);
+            }
+            if (enemy.board[x][y].hasShip && enemy.shipHealth[enemy.board[x][y].shipIndex] == 0 && selectedPlayer == currentPlayer && !hiddenEls && selectedPlayer != "0") {
+                renderShips(document.getElementById(`${x}-${y} ${playerName=="blue"?"red":"blue"}`),enemy.board[x][y]);
             }
             if (board[x][y].hasShip && board[x][y].isHit) {
                 cellEl.innerHTML = '<img src="images/hit.png">';
